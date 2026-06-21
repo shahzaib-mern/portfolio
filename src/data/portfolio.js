@@ -1,474 +1,272 @@
-// ╔══════════════════════════════════════════════════════════════════╗
-// ║   portfolio.js  —  EDIT THIS FILE TO UPDATE EVERYTHING          ║
-// ║   Text · Images · Links · Colors · Section titles · Social      ║
-// ╚══════════════════════════════════════════════════════════════════╝
+import { useState, useRef, useEffect } from "react";
+import { personal, contactInfo, sectionTitles } from "../data/portfolio";
 
-import profile from "../assets/Profile.jpg"; // Main profile photo
-import Blog from "../assets/Blog.webp";
-import Calculator from "../assets/Calculator.webp";
-import Car from "../assets/Car.webp";
-import CCNA from "../assets/CCNA.webp";
-import CRM from "../assets/CRM.webp";
-import Currency from "../assets/Currency.webp";
-import Ecommerce from "../assets/Ecommerce.webp";
-import Health from "../assets/Health.webp";
-import BMS from "../assets/BMS.webp";
-import Notes from "../assets/Notes.webp";
-import Quiz from "../assets/Quiz.webp";
-import Task from "../assets/Task.webp";
-import Weather from "../assets/Weather.webp";
+const WEB3FORMS_KEY = "8177812e-d882-4645-acd8-89f7bf8ff1e3";
 
-export const personal = {
-  firstName: "Shahzaib",
-  lastName: "Ali",
+async function sendEmail({ name, email, message }) {
+  const response = await fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({
+      access_key: WEB3FORMS_KEY,
+      name,
+      email,
+      message,
+      subject: `New Inquiry from ${name} — Shahzaib's Portfolio`,
+      from_name: "Shahzaib Portfolio",
+      replyto: email,
+    }),
+  });
 
-  // ── Hero 3-line all-caps serif title
-  heroLine1: "MERN STACK",
-  heroLine2: "FULL STACK",
-  heroLine3: "DEVELOPER.",
+  const data = await response.json();
 
-  // ── Short bio below hero title
-  tagline:
-    "MERN Stack Developer with hands-on industry experience building scalable web applications. BS Software Engineering — 6th Sem, CGPA 3.77 — shipping real products, one commit at a time.",
+  if (!response.ok || data.success === false) {
+    throw new Error(data.message || "Failed to send. Please try again.");
+  }
 
-  // ── Profile photo — used in hero background (colorful, not B&W)
-  photo: profile,
+  return data;
+}
 
-  location: "Sargodha, Punjab, Pakistan",
-  email: "shahzaibali55531@email.com",
-  phone: "+92-344-7859842",
-  available: false, // true → shows green "Open to Work" badge
-  cvLink:
-    "https://drive.google.com/file/d/1Ng6XD-qW1oyeZHwJ27beRcWWzuF-fTnM/view?usp=drivesdk",
+export default function Contact() {
+  const ref = useRef(null);
+  const [vis, setVis] = useState(false);
+  const [form, setForm] = useState({ name: "", email: "", message: "" });
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
 
-  social: {
-    github: "https://github.com/shahzaib-mern",
-    linkedin: "https://linkedin.com/in/shahzaib-ali-24671b363",
-    facebook: "https://www.facebook.com/profile.php?id=100090707371781",
-    instagram: "https://www.instagram.com/shahzaib_mern_dev/",
-  },
-};
+  useEffect(() => {
+    const ob = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) setVis(true); },
+      { threshold: 0.1 }
+    );
+    if (ref.current) ob.observe(ref.current);
+    return () => ob.disconnect();
+  }, []);
 
-// ─────────────────────────────────────────
-//  STATS STRIP  (3 big numbers below hero)
-// ─────────────────────────────────────────
-export const stats = [
-  { value: "14+", label: "Projects Built" },
-  { value: "2.5+", label: "Years of Coding" },
-  { value: "3.77", label: "CGPA / 4.0" },
-];
+  const change = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
-// ─────────────────────────────────────────
-//  VISION / ABOUT  (white split section)
-// ─────────────────────────────────────────
-export const vision = {
-  subHeading: "TECHNICAL MINDSET & ROADMAP",
-  heading: "My Technical Vision & Core Focus",
+  const submit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await sendEmail(form);
+      setSent(true);
+      setForm({ name: "", email: "", message: "" });
+      setTimeout(() => setSent(false), 6000);
+    } catch (err) {
+      setError(err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  body: [
-    "I'm a MERN Stack Developer with hands-on experience building modern, scalable web applications using React.js, JavaScript, Tailwind CSS, Node.js, Express.js, and MongoDB. Starting from self-directed learning in October 2023, I've progressed from mastering frontend architecture to shipping full-stack solutions in production environments.",
-    "I specialize in designing responsive user interfaces, developing RESTful APIs, integrating databases, and managing complete application deployment workflows — including VPS hosting, domain configuration, and CI/CD pipelines. I care about writing efficient, maintainable code and creating user-focused products that are as solid under the hood as they look on the surface.",
-  ],
+  const socialLinks = [
+    {
+      key: "github",
+      href: personal.social.github,
+      icon: (
+        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
+        </svg>
+      ),
+    },
+    {
+      key: "linkedin",
+      href: personal.social.linkedin,
+      icon: (
+        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+        </svg>
+      ),
+    },
+    {
+      key: "facebook",
+      href: personal.social.facebook,
+      icon: (
+        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.791-4.667 4.532-4.667 1.312 0 2.686.234 2.686.234v2.953H15.83c-1.491 0-1.951.925-1.951 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+        </svg>
+      ),
+    },
+    {
+      key: "instagram",
+      href: personal.social.instagram,
+      icon: (
+        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.051.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+        </svg>
+      ),
+    },
+  ];
 
-  ctaLabel: "SEE MY PROJECTS",
-  ctaHref: "#projects",
+  return (
+    <section
+      id="contact"
+      ref={ref}
+      className="bg-[#0b0b0b] border-t border-white/[0.04] relative overflow-hidden"
+    >
+      <div className="section-container relative z-10">
 
-  photo:
-    "https://images.unsplash.com/photo-1618477388954-7852f32655ec?w=900&q=80",
-};
+        <div className="section-header">
+          <p className="section-subtitle">{sectionTitles.contact.sub}</p>
+          <h2 className="section-heading">
+            {sectionTitles.contact.heading}{" "}
+            <span className="text-white/40">{sectionTitles.contact.accent}</span>
+          </h2>
+          <div className="w-20 h-1 bg-indigo-500/30 mx-auto mt-6 rounded-full" />
+        </div>
 
-// ─────────────────────────────────────────
-//  SKILLS CATEGORIES (shown as cards)
-// ─────────────────────────────────────────
-export const skillCategories = [
-  {
-    title: "Frontend Engineering",
-    icon: "FE",
-    skills: [
-      "React.js",
-      "JavaScript ES6+",
-      "Tailwind CSS",
-      "HTML5 & CSS3",
-      "Responsive Design",
-    ],
-  },
-  {
-    title: "Backend Development",
-    icon: "BE",
-    skills: [
-      "Node.js",
-      "Express.js",
-      "MongoDB & Mongoose",
-      "REST APIs",
-      "JWT Auth",
-    ],
-  },
-  {
-    title: "DevOps & Deployment",
-    icon: "DO",
-    skills: [
-      "Git & GitHub",
-      "Vercel",
-      "Hostinger (VPS)",
-      "Domain Configuration",
-      "Environment Variables",
-    ],
-  },
-  {
-    title: "AI & Automation",
-    icon: "AI",
-    skills: [
-      "Cursor AI",
-      "Claude AI",
-      "Lovable",
-      "n8n Workflows",
-      "Prompt Engineering",
-    ],
-  },
-  {
-    title: "Core CS Concepts",
-    icon: "CS",
-    skills: [
-      "Data Structures",
-      "Algorithms",
-      "OOP Concepts",
-      "Clean Code Principles",
-      "SDLC",
-    ],
-  },
-  {
-    title: "Design & Prototyping",
-    icon: "UX",
-    skills: [
-      "Figma",
-      "UI/UX Basics",
-      "Wireframing",
-      "Component Architecture",
-    ],
-  },
-];
+        <div className="grid lg:grid-cols-12 gap-16 items-start">
 
-export const skillTags = [
-  "React.js",
-  "JavaScript (ES6+)",
-  "Tailwind CSS",
-  "Node.js",
-  "Express.js",
-  "MongoDB",
-  "REST APIs",
-  "JWT Auth",
-  "Git & GitHub",
-  "Vercel",
-  "Hostinger (VPS)",
-  "CI/CD Basics",
-  "Figma",
-  "Cursor AI",
-  "Prompt Engineering",
-];
+          {/* ── Info Side ── */}
+          <div
+            className={`lg:col-span-5 flex flex-col gap-12 transition-all duration-1000 ${
+              vis ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-12"
+            }`}
+          >
+            <div>
+              <h3 className="text-2xl md:text-3xl font-serif font-bold text-white leading-tight mb-6">
+                Based in {contactInfo.address.split(",")[0]}, <br /> Serving Globally.
+              </h3>
+              <p className="text-sm text-white/50 leading-relaxed max-w-sm">
+                Open to freelance projects, collaborations, and full-stack opportunities. I typically respond within 24 hours.
+              </p>
+            </div>
 
-// ─────────────────────────────────────────
-//  EXPERIENCE SECTION
-// ─────────────────────────────────────────
-export const experiences = [
-  {
-    company: "Innovative Brain",
-    role: "Full Stack Developer",
-    type: "Hybrid · Full-time",
-    period: "June 2026 – Present",
-    duration: "Ongoing",
-    note: "Promoted from Internship",
-    badge: "Current",
-    color: "emerald",
-    desc: "Promoted to Full Stack Developer after demonstrating consistent output and technical growth during the internship phase. Building and maintaining production-grade MERN stack applications, designing scalable REST APIs, integrating third-party services, and actively contributing to system design discussions in a hybrid team environment.",
-    skills: [
-      "React.js",
-      "Node.js",
-      "Express.js",
-      "MongoDB",
-      "REST APIs",
-      "Git",
-      "Hostinger",
-    ],
-  },
-  {
-    company: "Innovative Brain",
-    role: "Frontend Developer Intern",
-    type: "Remote · Internship",
-    period: "March 2026 – May 2026",
-    duration: "3 months",
-    note: null,
-    badge: "Completed",
-    color: "indigo",
-    desc: "Joined as a Frontend Intern and rapidly became a reliable contributor. Built responsive, pixel-perfect UIs with React and Tailwind CSS, collaborated closely with senior developers, and shipped client-facing features with minimal revisions. Delivered consistent quality that led to a full-time offer before the internship concluded.",
-    skills: ["React.js", "Tailwind CSS", "Vite", "JavaScript", "Figma"],
-  },
-  {
-    company: "Growistan Ventures",
-    role: "Frontend Web Dev Intern",
-    type: "Remote · Internship",
-    period: "Mid May 2026 – Mid June 2026",
-    duration: "1 month",
-    note: null,
-    badge: "Completed",
-    color: "violet",
-    desc: "Contributed to production web interfaces as a Frontend Intern, developing and refining user-facing features aligned with business requirements. Gained practical exposure to real-world client workflows, agile-style development cycles, and cross-functional team collaboration in a remote setting.",
-    skills: ["HTML5", "CSS3", "JavaScript", "React.js", "Responsive Design"],
-  },
-];
+            <div className="flex flex-col gap-8">
+              {[
+                {
+                  label: "Email Me",
+                  val: contactInfo.email,
+                  href: `mailto:${contactInfo.email}`,
+                  icon: (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+                  ),
+                },
+                {
+                  label: "Phone & WhatsApp",
+                  val: contactInfo.phone,
+                  href: `tel:${contactInfo.phone}`,
+                  icon: (
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.143-7.143c-.155-.441.011-.928.387-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H3.375A2.25 2.25 0 002.25 3.375V6.75z" />
+                  ),
+                },
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center gap-5 group cursor-default">
+                  <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-black group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-xl shadow-white/5">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+                      {item.icon}
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-1">{item.label}</p>
+                    <a href={item.href} className="text-sm font-medium text-white group-hover:text-indigo-400 transition-colors tracking-wide">
+                      {item.val}
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-// ─────────────────────────────────────────
-//  SERVICES  (3×2 card grid)
-// ─────────────────────────────────────────
-export const services = [
-  {
-    icon: "MERN",
-    title: "Full-Stack Web Development",
-    desc: "End-to-end web applications built with MongoDB, Express, React, and Node.js. From database schema design to polished user interfaces — I cover the full stack.",
-  },
-  {
-    icon: "FE",
-    title: "Frontend Development",
-    desc: "Responsive, performant UIs with React and Tailwind CSS. I focus on clean component architecture, smooth interactions, and pixel-perfect layouts across all screen sizes.",
-  },
-  {
-    icon: "API",
-    title: "Backend & API Development",
-    desc: "Well-structured REST APIs with Node.js and Express. Secure JWT authentication, clean routing, proper middleware, and reliable MongoDB data management — done right from the start.",
-  },
-  {
-    icon: "DEPLOY",
-    title: "Deployment & Hosting",
-    desc: "Full deployment on Vercel, Railway, and Hostinger VPS — including environment configuration, domain setup, SSL, and post-launch stability checks to keep your app running smoothly.",
-  },
-  {
-    icon: "GIT",
-    title: "Version Control & Workflow",
-    desc: "Clean Git practices with meaningful commits, disciplined branching strategies, and well-maintained project history. I treat version control as a professional discipline, not an afterthought.",
-  },
-  {
-    icon: "AI",
-    title: "AI-Assisted Development",
-    desc: "Strategic use of AI tools like Claude and Cursor AI to accelerate development, prototype faster, and solve complex problems. AI is a force multiplier in my workflow — not a shortcut.",
-  },
-];
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-white/30 font-bold mb-5">Connect Socially</p>
+              <div className="flex gap-4">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.key}
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="w-12 h-12 rounded-xl bg-white flex items-center justify-center text-black hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-xl shadow-white/5 hover:-translate-y-1"
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </div>
 
-// ─────────────────────────────────────────
-//  PROJECTS
-// ─────────────────────────────────────────
-export const projects = [
-  // ── React + Tailwind (Featured Web Apps)
-  {
-    title: "CCNA Prep Hub",
-    type: "Web Application",
-    featured: true,
-    thumb: CCNA,
-    desc: "An interactive preparation platform for CCNA 200-301 students. Includes network diagrams, subnetting tools, and comprehensive study modules for networking excellence.",
-    tags: ["React.js", "Tailwind CSS", "Vite"],
-    live: "https://ccna-blog-web-oih1.vercel.app",
-    github: "https://github.com/shahzaib-mern/ccna-blogs",
-  },
-  {
-    title: "Banking Management System Dashboard",
-    type: "Web App",
-    featured: true,
-    thumb: BMS,
-    desc: "Feature-rich React banking dashboard showcasing real-world financial system UI. Includes modules for accounts, customers, transactions, loans, and analytics.",
-    tags: ["React.js", "Tailwind CSS", "Vercel", "Financial Dashboard"],
-    live: "https://banking-management-system-ochre.vercel.app",
-    github: "https://github.com/shahzaib-mern/banking-management-system",
-  },
-  {
-    title: "Hospital Management System",
-    type: "Web App",
-    featured: true,
-    thumb: Health,
-    desc: "A modern, responsive hospital management web application built with React, Tailwind CSS, and Vite. Provides comprehensive dashboards for patients, doctors, appointments, and billing.",
-    tags: ["React.js", "Tailwind CSS", "Vite", "Hospital Management"],
-    live: "https://hospital-management-system-steel-ten.vercel.app",
-    github: "https://github.com/shahzaib-mern/hospital-management-system",
-  },
-  {
-    title: "Responsive Frontend E-Commerce",
-    type: "Web App",
-    featured: true,
-    thumb: Ecommerce,
-    desc: "Responsive frontend e-commerce application with clean UI and smooth UX. Features product listings, detailed pages, cart system, and basic authentication using React Router.",
-    tags: ["React.js", "Tailwind CSS", "React Router", "Cart System"],
-    live: "https://ecommerce-nine-chi-37.vercel.app",
-    github: "https://github.com/shahzaib-mern/ecommerce",
-  },
-  {
-    title: "Client CRM Management System",
-    type: "Web App",
-    featured: false,
-    thumb: CRM,
-    desc: "Responsive React-based CRM app for managing clients, deals, and workflows. Features interactive data tables, workflow modals, and dynamic insights.",
-    tags: ["React.js", "Tailwind CSS", "CRM", "Modals"],
-    live: "https://client-management-system-blue.vercel.app/",
-    github: "https://github.com/shahzaib-mern/client-management-system",
-  },
-  {
-    title: "Car Rental Platform",
-    type: "Web App",
-    featured: true,
-    thumb: Car,
-    desc: "A modern and responsive car rental website built with React 19, Vite, and Tailwind CSS. Offers visual animations (AOS), smooth React Router page switching, and a complete booking flow.",
-    tags: ["React.js", "Tailwind CSS", "React Router", "Vite"],
-    live: "https://car-rental-abnp-5y25v04ax-shahzaib-merns-projects.vercel.app/",
-    github: "https://github.com/shahzaib-mern/car-rental",
-  },
+          {/* ── Form Side ── */}
+          <div
+            className={`lg:col-span-7 transition-all duration-1000 delay-200 ${
+              vis ? "opacity-100 translate-y-0" : "opacity-0 translate-y-12"
+            }`}
+          >
+            <div className="card-base !p-10 shadow-2xl relative overflow-hidden group">
+              <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/[0.02] transition-colors duration-700" />
 
-  // ── Vanilla HTML / CSS / JS Projects
-  {
-    title: "Networks Blogging Platform & CMS",
-    type: "Website",
-    featured: false,
-    thumb: Blog,
-    desc: "A Computer Networks–focused blogging platform featuring a client-side CMS, dark/light theme toggle, LocalStorage persistence, and a modern glassmorphism UI — built entirely with Vanilla JavaScript.",
-    tags: ["HTML5", "CSS3", "JavaScript", "CMS"],
-    live: "https://shahzaib-mern.github.io/blogging-web/",
-    github: "https://github.com/shahzaib-mern/blogging-web",
-  },
-  {
-    title: "Global Currency Converter",
-    type: "Website",
-    featured: false,
-    thumb: Currency,
-    desc: "Real-time currency converter supporting 200+ global currencies, built with Vanilla JavaScript. Fetches live exchange rates and displays country flags for a polished UX.",
-    tags: ["HTML5", "CSS3", "JavaScript", "REST API"],
-    live: "https://shahzaib-mern.github.io/currency-converter/",
-    github: "https://github.com/shahzaib-mern/currency-converter",
-  },
-  {
-    title: "Real-Time Weather Dashboard",
-    type: "Website",
-    featured: false,
-    thumb: Weather,
-    desc: "Real-time weather dashboard focused on Pakistan cities, built with Vanilla JavaScript. Uses live APIs with dynamic weather icons and a modern glassmorphism UI.",
-    tags: ["HTML5", "CSS3", "JavaScript", "Weather API"],
-    live: "https://shahzaib-mern.github.io/weather-app/",
-    github: "https://github.com/shahzaib-mern/weather-app",
-  },
-  {
-    title: "Offline-First Notes App",
-    type: "Website",
-    featured: false,
-    thumb: Notes,
-    desc: "A modern, offline-first note-taking application featuring priority-based notes, tag categorization, live search and filtering, theme switching, and persistent LocalStorage.",
-    tags: ["HTML5", "CSS3", "JavaScript", "LocalStorage"],
-    live: "https://shahzaib-mern.github.io/notes-app/",
-    github: "https://github.com/shahzaib-mern/notes-app",
-  },
-  {
-    title: "Interactive QuizMaster App",
-    type: "Website",
-    featured: false,
-    thumb: Quiz,
-    desc: "A multi-category quiz application with timed rounds, multiple difficulty levels, scoring, leaderboard tracking, and end-of-quiz question review — all in Vanilla JS.",
-    tags: ["HTML5", "CSS3", "JavaScript"],
-    live: "https://shahzaib-mern.github.io/quiz-app/",
-    github: "https://github.com/shahzaib-mern/quiz-app",
-  },
-  {
-    title: "Smart Task To-Do Manager",
-    type: "Website",
-    featured: false,
-    thumb: Task,
-    desc: "Smart task management app with 3 synced views, duplicate prevention, live task counters, smooth animations, and a clean, intuitive UI — built in Vanilla JavaScript.",
-    tags: ["HTML5", "CSS3", "JavaScript"],
-    live: "https://shahzaib-mern.github.io/todo-list/",
-    github: "https://github.com/shahzaib-mern/todo-list",
-  },
-  {
-    title: "Scientific Calculator",
-    type: "Website",
-    featured: false,
-    thumb: Calculator,
-    desc: "A responsive scientific calculator with advanced operations, dual display, and robust error handling — built with pure Vanilla JavaScript.",
-    tags: ["HTML5", "CSS3", "JavaScript"],
-    live: "https://shahzaib-mern.github.io/calculator-app/",
-    github: "https://github.com/shahzaib-mern/calculator-app",
-  },
-];
+              {sent ? (
+                <div className="relative z-10 flex flex-col items-center justify-center py-20 text-center">
+                  <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 mb-8 text-3xl shadow-2xl shadow-emerald-500/20">
+                    ✓
+                  </div>
+                  <h4 className="text-2xl font-serif font-bold text-white mb-3">Message Received.</h4>
+                  <p className="text-sm text-white/50">I'll be in touch with you shortly.</p>
+                </div>
+              ) : (
+                <form onSubmit={submit} className="relative z-10 space-y-8">
+                  {error && (
+                    <div className="p-4 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] uppercase tracking-widest font-bold rounded-xl">
+                      {error}
+                    </div>
+                  )}
 
-// ─────────────────────────────────────────
-//  TESTIMONIALS
-// ─────────────────────────────────────────
-export const testimonials = [
-  {
-    quote:
-      "Shahzaib joined us as an intern and immediately stood out. He delivered clean, production-ready React interfaces that needed minimal review, communicated proactively, and consistently went beyond his assigned tasks. It was an easy decision to bring him on full-time — he is exactly the kind of developer you want on a team building real products.",
-    name: "Muhammad Usman",
-    role: "CEO, Innovative Brain",
-    initials: "MU",
-    photo: null,
-  },
-  {
-    quote:
-      "In just one month, Shahzaib contributed meaningfully to our web interfaces with a level of professionalism we rarely see from interns. He asked the right questions, understood our requirements quickly, and delivered responsive, well-structured frontend work without needing hand-holding. A focused and reliable developer — I would not hesitate to work with him again.",
-    name: "Nazeer Ahmad",
-    role: "CEO, Growistan Ventures",
-    initials: "NA",
-    photo: null,
-  },
-];
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-2">Your Name</label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={form.name}
+                        onChange={change}
+                        required
+                        placeholder="John Doe"
+                        className="w-full bg-white/[0.03] border border-white/10 text-white placeholder-white/20 px-6 py-4 rounded-xl outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all text-sm"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-2">Email Address</label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={form.email}
+                        onChange={change}
+                        required
+                        placeholder="john@example.com"
+                        className="w-full bg-white/[0.03] border border-white/10 text-white placeholder-white/20 px-6 py-4 rounded-xl outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all text-sm"
+                      />
+                    </div>
+                  </div>
 
-// ─────────────────────────────────────────
-//  CONTACT INFO
-// ─────────────────────────────────────────
-export const contactInfo = {
-  address: "Sargodha, Punjab, Pakistan",
-  email: "shahzaibali55531@email.com",
-  phone: "+92-344-7859842",
-};
+                  <div className="space-y-3">
+                    <label className="text-[10px] uppercase tracking-widest text-white/30 font-bold ml-2">Your Message</label>
+                    <textarea
+                      name="message"
+                      rows={6}
+                      value={form.message}
+                      onChange={change}
+                      required
+                      placeholder="Tell me about your project or opportunity..."
+                      className="w-full bg-white/[0.03] border border-white/10 text-white placeholder-white/20 px-6 py-4 rounded-xl outline-none focus:border-indigo-500/50 focus:bg-white/[0.05] transition-all text-sm resize-none"
+                    />
+                  </div>
 
-// ─────────────────────────────────────────
-//  SECTION TITLES
-// ─────────────────────────────────────────
-export const sectionTitles = {
-  skills: {
-    sub: "Expertise",
-    heading: "Technical",
-    accent: "Capabilities",
-    desc: "My full technical stack — from frontend engineering and backend development to deployment workflows, AI tooling, and the soft skills that make collaboration actually work.",
-  },
-  services: {
-    sub: "What I Offer",
-    heading: "My",
-    accent: "Services",
-    desc: "End-to-end web development services — from UI design to backend APIs and live deployment. Built to deliver, not just to demo.",
-  },
-  projects: {
-    sub: "What I've Built",
-    heading: "My Recent",
-    accent: "Projects",
-    desc: "14+ projects across Vanilla JS and the MERN stack — dashboards, management systems, API-driven apps, and full-stack platforms.",
-  },
-  experience: {
-    sub: "Where I've Worked",
-    heading: "Professional",
-    accent: "Experience",
-    desc: "Real industry experience — from remote internships to a promoted full-time role — building production applications and learning what actually matters when shipping software.",
-  },
-  testimonials: {
-    sub: "Client Feedback",
-    heading: "Industry",
-    accent: "Endorsements",
-    desc: "Words from the people I've worked with directly on real, shipped products.",
-  },
-  contact: {
-    sub: "Open to Work",
-    heading: "Get in",
-    accent: "Touch",
-    desc: "Available for full-time roles, freelance projects, and junior MERN Stack positions. Let's build something together.",
-    followHeading: "Find Me Online",
-  },
-};
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="btn-primary border-none w-full md:w-auto disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {loading ? "Sending..." : "Send Message →"}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
 
-// ─────────────────────────────────────────
-//  FOOTER
-// ─────────────────────────────────────────
-export const footerData = {
-  copy: `© ${new Date().getFullYear()} Shahzaib Ali. All rights reserved.`,
-  stack: "Built with React & Tailwind CSS",
-};
+        </div>
+      </div>
+    </section>
+  );
+}
